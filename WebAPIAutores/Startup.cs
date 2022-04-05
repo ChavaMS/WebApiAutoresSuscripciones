@@ -15,6 +15,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Text;
 using System.Text.Json.Serialization;
+using WebAPIAutores.Entidades;
 using WebAPIAutores.Filtros;
 using WebAPIAutores.Middlewares;
 using WebAPIAutores.Servicios;
@@ -86,7 +87,7 @@ namespace WebAPIAutores
 
             services.AddAutoMapper(typeof(Startup));
 
-            services.AddIdentity<IdentityUser, IdentityRole>()
+            services.AddIdentity<Usuario, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
 
@@ -105,6 +106,9 @@ namespace WebAPIAutores
                     builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
                 });
             });
+
+            services.AddScoped<ServicioLlaves>();
+            services.AddHostedService<FacturasHostedService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -126,6 +130,8 @@ namespace WebAPIAutores
             app.UseRouting();
 
             app.UseCors();
+
+            app.UseLimitarPeticiones();
 
             app.UseAuthorization();
 

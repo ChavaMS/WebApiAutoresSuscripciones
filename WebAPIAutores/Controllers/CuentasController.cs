@@ -14,6 +14,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using WebAPIAutores.DTOs;
+using WebAPIAutores.Entidades;
 using WebAPIAutores.Servicios;
 
 namespace WebAPIAutores.Controllers
@@ -22,30 +23,37 @@ namespace WebAPIAutores.Controllers
     [Route("api/cuentas")]
     public class CuentasController: ControllerBase
     {
-        private readonly UserManager<IdentityUser> userManager;
+        private readonly UserManager<Usuario> userManager;
         private readonly IConfiguration configuration;
-        private readonly SignInManager<IdentityUser> signInManager;
+        private readonly SignInManager<Usuario> signInManager;
+        private readonly ServicioLlaves servicioLlaves;
 
-        public CuentasController(UserManager<IdentityUser> userManager,
+        public CuentasController(UserManager<Usuario> userManager,
             IConfiguration configuration,
-            SignInManager<IdentityUser> signInManager,
+            SignInManager<Usuario> signInManager,
             IDataProtectionProvider dataProtectionProvider,
-            HashService hashService)
+            HashService hashService,
+            ServicioLlaves servicioLlaves)
         {
             this.userManager = userManager;
             this.configuration = configuration;
             this.signInManager = signInManager;
+            this.servicioLlaves = servicioLlaves;
         }      
 
         [HttpPost("registrar")] // api/cuentas/registrar
         public async Task<ActionResult<RespuestaAutenticacion>> Registrar(CredencialesUsuario credencialesUsuario)
         {
-            var usuario = new IdentityUser { UserName = credencialesUsuario.Email, 
-                Email = credencialesUsuario.Email };
+            var usuario = new Usuario
+            {
+                UserName = credencialesUsuario.Email, 
+                Email = credencialesUsuario.Email 
+            };
             var resultado = await userManager.CreateAsync(usuario, credencialesUsuario.Password);
 
             if (resultado.Succeeded)
             {
+                await servicioLlaves.CrearLlave(usuario.Id, TipoLlave.Gratuita);
                 return await ConstruirToken(credencialesUsuario, usuario.Id);
             }
             else
